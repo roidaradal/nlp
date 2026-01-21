@@ -1,0 +1,12 @@
+v0.1.0 - Basic Tokenizer 
+    - Commit: 
+    x types: Token, Lexer
+    x Command and options
+    x LoadLexer - load lexer tokens from file
+    x Adjust string pattern to include escaped quotes
+    - Lexer.Tokenize()
+        x Add ignore set for Tokenize
+        - Use []byte instead of string
+        - Split byte array by \n to get line numbers 
+        - Annotate chunks by line number, column start/end
+    - TODO: Test tokenize on invalid input

@@ -1,0 +1,13 @@
+LEFT_BRACE      :   \{
+RIGHT_BRACE     :   \}
+LEFT_BRACKET    :   \[
+RIGHT_BRACKET   :   \]
+COLON           :   :
+COMMA           :   ,
+LITERAL_TRUE    :   true
+LITERAL_FALSE   :   false
+LITERAL_NULL    :   null
+STRING          :   "[^"\\]*(?:\\.[^"\\]*)*"
+NUMBER          :   -?\d+(\.\d+)?
+NEWLINE         :   (\r?\n)+
+WHITESPACE      :   \s+
