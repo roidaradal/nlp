@@ -8,6 +8,6 @@ LITERAL_TRUE    :   true
 LITERAL_FALSE   :   false
 LITERAL_NULL    :   null
 STRING          :   "[^"\\]*(?:\\.[^"\\]*)*"
-NUMBER          :   -?\d+(\.\d+)?
-NEWLINE         :   (\r?\n)+
+NUMBER          :   -?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?
+NEWLINE         :   (?:\r?\n)+
 WHITESPACE      :   \s+

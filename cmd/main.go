@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"slices"
+	"strings"
 
 	"gihub.com/roidaradal/nlp"
 	"github.com/roidaradal/fn/dict"
@@ -27,6 +28,10 @@ func main() {
 }
 
 func cmdTokenize(options dict.StringMap) error {
+	// Required: file={PATH} tokens={PATH}
+	// Options:  ignore={TYPE1,TYPE2,...}
+	tokenizeUsage := "Usage: nlp tokenize file={PATH} tokens={PATH} (ignore={TYPE1,TYPE2,...})"
+
 	// Get paths from options
 	tokenPath, filePath := "", ""
 	ignore := ds.NewSet[string]()
@@ -37,13 +42,13 @@ func cmdTokenize(options dict.StringMap) error {
 		case "tokens":
 			tokenPath = v
 		case "ignore":
-			ignore.AddItems(str.CommaSplit(v))
+			ignore.AddItems(strings.Split(v, ","))
 		}
 	}
 
 	// Check if both paths are set
 	if tokenPath == "" || filePath == "" {
-		fmt.Println("Usage: nlp tokenize file={PATH} tokens={PATH} (ignore={TYPE1,TYPE2,...})")
+		fmt.Println(tokenizeUsage)
 		return nil
 	}
 
@@ -58,10 +63,9 @@ func cmdTokenize(options dict.StringMap) error {
 	if err != nil {
 		return err
 	}
-	text := string(bytes)
 
 	// Tokenize
-	tokens, err := lexer.Tokenize(text, ignore)
+	tokens, err := lexer.Tokenize(bytes, ignore)
 	if err != nil {
 		return err
 	}
