@@ -3,6 +3,7 @@ package nlp
 import (
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/roidaradal/fn/ds"
 	"github.com/roidaradal/fn/io"
@@ -45,6 +46,11 @@ func LoadLexer(path string) (*Lexer, error) {
 		return nil, str.WrapError("failed to open file", err)
 	}
 
+	return LoadLexerLines(lines)
+}
+
+// Load Lexer token types from lines
+func LoadLexerLines(lines []string) (*Lexer, error) {
 	types := make([]TokenType, 0)
 	for _, line := range lines {
 		parts := str.CleanSplitN(line, ":", 2)
@@ -107,6 +113,22 @@ func (l *Lexer) tokenizeLine(row int, line []byte, ignore *ds.Set[string]) ([]To
 
 // Create new JSON Lexer
 func NewJSONLexer() (*Lexer, error) {
-	path := "cfg/json.grammar"
-	return LoadLexer(path)
+	lines := strings.Split(strings.TrimSpace(jsonGrammar), "\n")
+	lines = list.Filter(lines, str.NotEmpty)
+	return LoadLexerLines(lines)
 }
+
+var jsonGrammar string = `
+LEFT_BRACE      :   \{
+RIGHT_BRACE     :   \}
+LEFT_BRACKET    :   \[
+RIGHT_BRACKET   :   \]
+COLON           :   :
+COMMA           :   ,
+LITERAL_TRUE    :   true
+LITERAL_FALSE   :   false
+LITERAL_NULL    :   null
+STRING          :   "[^"\\]*(?:\\.[^"\\]*)*"
+NUMBER          :   -?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?
+WHITESPACE      :   \s+
+`

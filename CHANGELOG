@@ -1,3 +1,7 @@
+v0.1.3 - Load Lexer Lines 
+    x Commit: 2026-01-21 16:45
+    x LoadLexerLines 
+    x Load JSON Lexer from string (not from file)
 v0.1.2 - Update Module Name 
     x Commit: 2026-01-21 16:31
     x Update module name typo error

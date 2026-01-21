@@ -5,12 +5,12 @@ import (
 	"slices"
 	"strings"
 
-	"gihub.com/roidaradal/nlp"
 	"github.com/roidaradal/fn/dict"
 	"github.com/roidaradal/fn/ds"
 	"github.com/roidaradal/fn/io"
 	"github.com/roidaradal/fn/list"
 	"github.com/roidaradal/fn/str"
+	"github.com/roidaradal/nlp"
 )
 
 func main() {
