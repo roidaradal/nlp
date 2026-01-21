@@ -1,3 +1,6 @@
+v0.1.0 - JSON Lexer 
+    x Commit: 2026-01-21 16:29
+    x NewJSONLexer
 v0.1.0 - Lexer 
     x Commit: 2026-01-21 16:16
     x types: TokenPair, Token, Lexer

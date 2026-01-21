@@ -30,7 +30,7 @@ func (t Token) Coords() string {
 }
 
 type Lexer struct {
-	TokenTypes []TokenType
+	tokenTypes []TokenType
 	patterns   []*regexp.Regexp
 }
 
@@ -51,14 +51,14 @@ func LoadLexer(path string) (*Lexer, error) {
 		types = append(types, TokenType{parts[0], parts[1]})
 	}
 
-	lexer := &Lexer{TokenTypes: types}
+	lexer := &Lexer{tokenTypes: types}
 	return lexer, nil
 }
 
 // Tokenize the given list of lines
 func (l *Lexer) Tokenize(lines [][]byte, ignore *ds.Set[string]) ([]Token, error) {
 	// Prepare token patterns
-	l.patterns = list.Map(l.TokenTypes, func(pair TokenType) *regexp.Regexp {
+	l.patterns = list.Map(l.tokenTypes, func(pair TokenType) *regexp.Regexp {
 		return regexp.MustCompile("^" + pair[1])
 	})
 
@@ -87,7 +87,7 @@ func (l *Lexer) tokenizeLine(row int, line []byte, ignore *ds.Set[string]) ([]To
 			}
 			start, end := match[0], match[1]
 			chunk := string(line[start:end]) // get chunk of text matched by pattern
-			tokenType := l.TokenTypes[i][0]  // get corresponding token type
+			tokenType := l.tokenTypes[i][0]  // get corresponding token type
 			line = line[end:]                // consume chunk and get remaining line
 			if ignore == nil || ignore.HasNo(tokenType) {
 				// Add to tokens list if no ignore set or ignore set doesnt have token type
@@ -103,4 +103,10 @@ func (l *Lexer) tokenizeLine(row int, line []byte, ignore *ds.Set[string]) ([]To
 		}
 	}
 	return tokens, nil
+}
+
+// Create new JSON Lexer
+func NewJSONLexer() (*Lexer, error) {
+	path := "cfg/json.grammar"
+	return LoadLexer(path)
 }
