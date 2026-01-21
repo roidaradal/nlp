@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"slices"
 	"strings"
 
@@ -59,15 +58,21 @@ func cmdTokenize(options dict.StringMap) error {
 	}
 
 	// Open file path
-	bytes, err := os.ReadFile(filePath)
+	lines, err := nlp.ReadLineBytes(filePath)
 	if err != nil {
 		return err
 	}
 
 	// Tokenize
-	tokens, err := lexer.Tokenize(bytes, ignore)
+	tokens, err := lexer.Tokenize(lines, ignore)
 	if err != nil {
 		return err
+	}
+	numTokens := len(tokens)
+	fmt.Println("Tokens:", numTokens)
+
+	if numTokens == 0 {
+		return nil
 	}
 
 	// Display tokens
