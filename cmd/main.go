@@ -78,12 +78,14 @@ func cmdTokenize(options dict.StringMap) error {
 	// Display tokens
 	maxNum := len(str.Int(len(tokens)))
 	maxLength := slices.Max(list.Map(tokens, func(token nlp.Token) int {
-		return len(token[0])
+		return len(token.Type)
 	}))
-	template := fmt.Sprintf("[%%%dd] %%-%ds : %%s\n", maxNum, maxLength)
+	maxCoords := slices.Max(list.Map(tokens, func(token nlp.Token) int {
+		return len(token.Coords())
+	}))
+	template := fmt.Sprintf("[%%%dd] %%-%ds : %%-%ds %%s\n", maxNum, maxLength, maxCoords)
 	for i, token := range tokens {
-		tokenType, chunk := token.Tuple()
-		fmt.Printf(template, i+1, tokenType, chunk)
+		fmt.Printf(template, i+1, token.Type, token.Coords(), token.Text)
 	}
 	return nil
 }

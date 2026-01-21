@@ -2,21 +2,36 @@ package nlp
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/roidaradal/fn/ds"
 	"github.com/roidaradal/fn/io"
+	"github.com/roidaradal/fn/list"
 	"github.com/roidaradal/fn/str"
 )
 
-type Token [2]string
+type TokenType [2]string // [TokenType, TokenRegExp]
 
-// Destructure token parts
-func (t Token) Tuple() (string, string) {
+// Destructure token type parts
+func (t TokenType) Tuple() (string, string) {
 	return t[0], t[1]
 }
 
+type Token struct {
+	Type string
+	Text string
+	Row  int
+	Col  int
+}
+
+// String containing (row, col)
+func (t Token) Coords() string {
+	return fmt.Sprintf("(%d, %d)", t.Row+1, t.Col+1)
+}
+
 type Lexer struct {
-	Tokens []Token // [TokenType, TokenRegExp]
+	TokenTypes []TokenType
+	patterns   []*regexp.Regexp
 }
 
 // Load Lexer token types from file
@@ -30,57 +45,62 @@ func LoadLexer(path string) (*Lexer, error) {
 		return nil, str.WrapError("failed to open file", err)
 	}
 
-	tokens := make([]Token, 0)
+	types := make([]TokenType, 0)
 	for _, line := range lines {
 		parts := str.CleanSplitN(line, ":", 2)
-		tokens = append(tokens, Token{parts[0], parts[1]})
+		types = append(types, TokenType{parts[0], parts[1]})
 	}
 
-	lexer := &Lexer{Tokens: tokens}
+	lexer := &Lexer{TokenTypes: types}
 	return lexer, nil
 }
 
-// Tokenize the given text
-func (l Lexer) Tokenize(lines [][]byte, ignore *ds.Set[string]) ([]Token, error) {
-	for _, line := range lines {
-		fmt.Println(string(line))
+// Tokenize the given list of lines
+func (l *Lexer) Tokenize(lines [][]byte, ignore *ds.Set[string]) ([]Token, error) {
+	// Prepare token patterns
+	l.patterns = list.Map(l.TokenTypes, func(pair TokenType) *regexp.Regexp {
+		return regexp.MustCompile("^" + pair[1])
+	})
+
+	tokens := make([]Token, 0)
+	for row, line := range lines {
+		lineTokens, err := l.tokenizeLine(row, line, ignore)
+		if err != nil {
+			return nil, err
+		}
+		tokens = append(tokens, lineTokens...)
 	}
-	// // Prepare token patterns
-	// patterns := list.Map(l.Tokens, func(token Token) *regexp.Regexp {
-	// 	return regexp.MustCompile("^" + token[1])
-	// })
-	// // Tokenize text by checking each pattern for match until text is fully consumed
-	// tokens := make([]Token, 0)
-	// for len(bytes) > 0 {
-	// 	found := false
-	// 	for i, pattern := range patterns {
-	// 		match := pattern.FindIndex(bytes)
-	// 		if match == nil {
-	// 			continue // skip if not match
-	// 		}
-	// 		start, end := match[0], match[1]
-	// 		chunk := string(bytes[start:end]) // get chunk of text matched by pattern
-	// 		tokenType := l.Tokens[i][0]       // get corresponding token type
-	// 		bytes = bytes[end:]               // consume chunk and get remaining text
-	// 		if ignore == nil || ignore.HasNo(tokenType) {
-	// 			// Add to tokens list if no ignore set or ignore set doesn't have token type
-	// 			tokens = append(tokens, Token{tokenType, chunk})
-	// 		}
-	// 		found = true
-	// 		break
-	// 	}
-	// 	if !found {
-	// 		limit := min(10, len(bytes)) // display first 10 (or shorter) chars left of text
-	// 		return nil, fmt.Errorf("failed to tokenize: %s", string(bytes[:limit]))
-	// 	}
-	// }
-	// return tokens, nil
-	return []Token{}, nil
+	return tokens, nil
 }
 
-// Split bytes by newline
-func splitByNewline(bytes []byte) [][]byte {
-	lines := make([][]byte, 0)
-
-	return lines
+// Tokenize one line
+func (l *Lexer) tokenizeLine(row int, line []byte, ignore *ds.Set[string]) ([]Token, error) {
+	// Tokenize line by checking each pattern for match until line is fully consumed
+	tokens := make([]Token, 0)
+	col := 0
+	for len(line) > 0 {
+		found := false
+		for i, pattern := range l.patterns {
+			match := pattern.FindIndex(line)
+			if match == nil {
+				continue // skip if not match
+			}
+			start, end := match[0], match[1]
+			chunk := string(line[start:end]) // get chunk of text matched by pattern
+			tokenType := l.TokenTypes[i][0]  // get corresponding token type
+			line = line[end:]                // consume chunk and get remaining line
+			if ignore == nil || ignore.HasNo(tokenType) {
+				// Add to tokens list if no ignore set or ignore set doesnt have token type
+				tokens = append(tokens, Token{Type: tokenType, Text: chunk, Row: row, Col: col})
+			}
+			col += end - start
+			found = true
+			break
+		}
+		if !found {
+			limit := min(10, len(line))
+			return nil, fmt.Errorf("failed to tokenize at line %d, col %d: %s", row+1, col+1, string(line[:limit]))
+		}
+	}
+	return tokens, nil
 }

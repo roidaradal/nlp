@@ -9,5 +9,4 @@ LITERAL_FALSE   :   false
 LITERAL_NULL    :   null
 STRING          :   "[^"\\]*(?:\\.[^"\\]*)*"
 NUMBER          :   -?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?
-NEWLINE         :   (?:\r?\n)+
 WHITESPACE      :   \s+
