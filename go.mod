@@ -1,4 +1,4 @@
-module gihub.com/roidaradal/nlp
+module github.com/roidaradal/nlp
 
 go 1.25.0
 

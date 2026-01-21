@@ -1,4 +1,7 @@
-v0.1.0 - JSON Lexer 
+v0.1.2 - Update Module Name 
+    x Commit: 2026-01-21 16:31
+    x Update module name typo error
+v0.1.1 - JSON Lexer 
     x Commit: 2026-01-21 16:29
     x NewJSONLexer
 v0.1.0 - Lexer 
