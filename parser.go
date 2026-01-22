@@ -1,39 +1,41 @@
 package nlp
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
 
 	"github.com/roidaradal/fn/ds"
+	"github.com/roidaradal/fn/lang"
 	"github.com/roidaradal/fn/list"
 	"github.com/roidaradal/fn/str"
 )
 
-// Epsilon in grammar
-// const epsilon string = "EPSILON"
+const (
+	// epsilon    string = "EPSILON"
+	whitespace string = "WHITESPACE"
+)
+
+type sentence = []string
 
 type Parser struct {
 	*Lexer
 	variables []string
 	terminals []string
-	rules     map[string][][]string
+	rules     map[string][]sentence
+	start     string
 }
 
-func (p Parser) Info() string {
-	out := make([]string, 0)
-	out = append(out, fmt.Sprintf("Terminals: %d", len(p.terminals)))
-	for _, terminal := range p.terminals {
-		out = append(out, fmt.Sprintf("  %s", terminal))
-	}
-	out = append(out, fmt.Sprintf("Variables: %d", len(p.variables)))
-	for _, variable := range p.variables {
-		out = append(out, fmt.Sprintf("  %s => %d", variable, len(p.rules[variable])))
-		for _, rule := range p.rules[variable] {
-			out = append(out, fmt.Sprintf("    => %s", strings.Join(rule, " ")))
-		}
-	}
-	return strings.Join(out, "\n")
+type deriveStep struct {
+	Sentence sentence // combination of variables and terminals
+	Tokens   sentence // remaining tokens
+}
+
+func (s deriveStep) String() string {
+	left := strings.Join(s.Sentence, " ")
+	right := strings.Join(s.Tokens, " ")
+	return fmt.Sprintf("%s | %s", left, right)
 }
 
 // Load Parser grammar from file
@@ -56,6 +58,7 @@ func LoadParserLines(tokenLines, grammarLines []string) (*Parser, error) {
 	p := &Parser{
 		Lexer:     lexer,
 		variables: make([]string, 0),
+		terminals: make([]string, 0),
 		rules:     make(map[string][][]string),
 	}
 	terminals := ds.NewSet[string]()
@@ -75,8 +78,13 @@ func LoadParserLines(tokenLines, grammarLines []string) (*Parser, error) {
 			terminals.AddItems(list.Filter(rule, isTerminal))
 		}
 	}
-	p.terminals = terminals.Items()
-	slices.Sort(p.terminals)
+	if len(p.variables) > 0 {
+		p.start = p.variables[0] // start = first variable
+	}
+	if terminals.Len() > 0 {
+		p.terminals = terminals.Items()
+		slices.Sort(p.terminals)
+	}
 	return p, nil
 }
 
@@ -88,6 +96,99 @@ func isTerminal(token string) bool {
 // CHeck if token is variable
 func isVariable(token string) bool {
 	return strings.HasPrefix(token, "<") && strings.HasSuffix(token, ">")
+}
+
+// Tokenize given list of lines, and parse the resulting tokens
+func (p *Parser) Parse(lines [][]byte, ignore *ds.Set[string]) error {
+	// Tokenize the lines
+	tokens, err := p.Lexer.Tokenize(lines, ignore)
+	if err != nil {
+		return err
+	}
+
+	// Parse the tokens
+	items := list.Map(tokens, Token.GetType)
+	// Temporary: remove whitespace for now
+	// TODO: remove this step once optional whitespace added to grammars
+	items = list.Filter(items, func(item string) bool {
+		return item != whitespace
+	})
+
+	step := &deriveStep{
+		Sentence: sentence{p.start},
+		Tokens:   items,
+	}
+	// q := ds.NewQueue[deriveStep]()
+	// q.Enqueue(step)
+
+	// Invariant: sentence is non-empty and first word is a variable
+	// Important: replacement rule must start with terminal or is a single variable
+	variable := step.Sentence[0]
+	options := p.getReplacements(variable)
+	for _, rule := range options {
+		result, ok := align(rule, step.Tokens)
+		if ok {
+			// For now, check that both sides are fully consumed
+			// Later, add to queue to continue
+			isDone := len(result.Sentence) == 0 && len(result.Tokens) == 0
+			err := lang.Ternary(isDone, nil, errors.New("parse error"))
+			if err != nil {
+				fmt.Println(result.Sentence)
+				fmt.Println(result.Tokens)
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+// Align sentence and tokens
+func align(equation, tokens sentence) (*deriveStep, bool) {
+	limit := min(len(equation), len(tokens))
+	for i := range limit {
+		left, right := equation[i], tokens[i]
+		if isTerminal(left) {
+			// equation has terminal in front, try to match with token
+			if left != right {
+				return nil, false
+			}
+		} else {
+			// equation now has variable in front, stop here
+			step := &deriveStep{
+				Sentence: equation[i:],
+				Tokens:   tokens[i:],
+			}
+			return step, true
+		}
+	}
+	step := &deriveStep{
+		Sentence: equation[limit:],
+		Tokens:   tokens[limit:],
+	}
+	return step, true
+}
+
+// Get the replacement rules for given variable
+func (p *Parser) getReplacements(variable string) []sentence {
+	q := ds.NewQueue[string]()
+	q.Enqueue(variable)
+
+	replacements := make([]sentence, 0)
+	for q.NotEmpty() {
+		variable, _ = q.Dequeue()
+		for _, rule := range p.rules[variable] {
+			first := rule[0]
+			if isTerminal(first) {
+				// Add to replacement if rule's first word is terminal
+				replacements = append(replacements, rule)
+			} else {
+				// If variable, enqueue so that it can be expanded
+				q.Enqueue(first)
+			}
+		}
+	}
+	return replacements
 }
 
 // Create new JSON parser

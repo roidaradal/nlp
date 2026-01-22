@@ -29,6 +29,11 @@ func (t Token) Coords() string {
 	return fmt.Sprintf("(%d, %d)", t.Row+1, t.Col+1)
 }
 
+// Get the token type (used as function argument)
+func (t Token) GetType() string {
+	return t.Type
+}
+
 type Lexer struct {
 	tokenTypes []TokenType
 	patterns   []*regexp.Regexp

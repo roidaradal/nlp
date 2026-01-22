@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -13,73 +14,90 @@ import (
 	"github.com/roidaradal/nlp"
 )
 
+const usage string = "Usage: nlp <tokenize|parse> cfg={PATH} <file={PATH} | text={TEXT}> (ignore={TYPE1,TYPE2,...})"
+
+type Config struct {
+	path   string
+	lines  [][]byte
+	ignore *ds.Set[string]
+}
+
 func main() {
 	var err error
 	command, options := io.GetCommandOptions("")
+	cfg, err := getConfig(options)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
 	switch command {
 	case "tokenize":
-		err = cmdTokenize(options)
+		err = cmdTokenize(cfg)
 	case "parse":
-		err = cmdParse(options)
+		err = cmdParse(cfg)
 	default:
-		fmt.Println("Usage: nlp <tokenize|parse> (key=value)*")
+		fmt.Println(usage)
 	}
 	if err != nil {
 		fmt.Println("Error: ", err)
 	}
 }
 
-// Tokenize command handler
-func cmdTokenize(options dict.StringMap) error {
-	// Required: file={PATH} cfg={PATH}
+func getConfig(options dict.StringMap) (*Config, error) {
+	// Required: cfg={PATH}
+	// Required: file={PATH} | text={TEXT}
 	// Options:  ignore={TYPE1,TYPE2,...}
-	tokenizeUsage := "Usage: nlp tokenize cfg={PATH} (file={PATH} | text={TEXT}) (ignore={TYPE1,TYPE2,...})"
 
-	// Get paths from options
-	cfgPath, filePath, text := "", "", ""
-	ignore := ds.NewSet[string]()
+	// Process options
+	cfg := &Config{ignore: ds.NewSet[string]()}
+	filePath, text := "", ""
 	for k, v := range options {
 		switch k {
 		case "cfg":
-			cfgPath = v
+			cfg.path = v
 		case "file":
 			filePath = v
 		case "text":
 			text = v
 		case "ignore":
-			ignore.AddItems(strings.Split(v, ","))
+			cfg.ignore.AddItems(strings.Split(v, ","))
 		}
 	}
 
 	// Check if cfgPath is set and either filePath or text is set
-	if cfgPath == "" || (filePath == "" && text == "") {
-		fmt.Println(tokenizeUsage)
-		return nil
+	if cfg.path == "" || (filePath == "" && text == "") {
+		fmt.Println(usage)
+		return nil, errors.New("missing params")
 	}
-
-	// Create lexer from cfgPath
-	lexer, err := nlp.LoadLexer(cfgPath)
-	if err != nil {
-		return err
-	}
-
-	var lines [][]byte
 
 	if filePath != "" {
 		// Read lines from filePath
-		lines, err = nlp.ReadLineBytes(filePath)
+		lines, err := nlp.ReadLineBytes(filePath)
+		if err != nil {
+			return nil, err
+		}
+		cfg.lines = lines
 	} else {
 		// Read lines from text
-		lines = list.Map(str.Lines(text), func(line string) []byte {
+		cfg.lines = list.Map(str.Lines(text), func(line string) []byte {
 			return []byte(line)
 		})
 	}
+
+	return cfg, nil
+}
+
+// Tokenize command handler
+func cmdTokenize(cfg *Config) error {
+	// Create lexer from cfgPath
+	lexer, err := nlp.LoadLexer(cfg.path)
 	if err != nil {
 		return err
 	}
 
 	// Tokenize
-	tokens, err := lexer.Tokenize(lines, ignore)
+	tokens, err := lexer.Tokenize(cfg.lines, cfg.ignore)
 	if err != nil {
 		return err
 	}
@@ -106,36 +124,18 @@ func cmdTokenize(options dict.StringMap) error {
 }
 
 // Parse command handler
-func cmdParse(options dict.StringMap) error {
-	// Required: file={PATH} cfg={PATH}
-	parseUsage := "Usage: nlp parse cfg={PATH} (file={PATH} | text={TEXT})"
-
-	// Get paths from options
-	cfgPath, filePath, text := "", "", ""
-	for k, v := range options {
-		switch k {
-		case "cfg":
-			cfgPath = v
-		case "file":
-			filePath = v
-		case "text":
-			text = v
-		}
-	}
-
-	// Check if cfgPath is set and either filePath or text is set
-	if cfgPath == "" || (filePath == "" && text == "") {
-		fmt.Println(parseUsage)
-		return nil
-	}
-
+func cmdParse(cfg *Config) error {
 	// Create parser from cfgPath
-	parser, err := nlp.LoadParser(cfgPath)
+	parser, err := nlp.LoadParser(cfg.path)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(parser.Info())
+	err = parser.Parse(cfg.lines, cfg.ignore)
+	if err != nil {
+		return err
+	}
+	fmt.Println("Parse: OK")
 
 	return nil
 }
