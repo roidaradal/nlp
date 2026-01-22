@@ -34,6 +34,11 @@ func (t Token) GetType() string {
 	return t.Type
 }
 
+// Token display
+func (t Token) String() string {
+	return t.Type
+}
+
 type Lexer struct {
 	tokenTypes []TokenType
 	patterns   []*regexp.Regexp
@@ -109,7 +114,7 @@ func (l *Lexer) tokenizeLine(row int, line []byte, ignore *ds.Set[string]) ([]To
 		}
 		if !found {
 			limit := min(10, len(line))
-			return nil, fmt.Errorf("failed to tokenize at line %d, col %d: %s", row+1, col+1, string(line[:limit]))
+			return nil, fmt.Errorf("syntax error: unexpected %q at line %d, col %d", string(line[:limit]), row+1, col+1)
 		}
 	}
 	return tokens, nil

@@ -1,9 +1,10 @@
 TODO:
+- Add test suite for JSON parser
 - Add grammar notation for * + ?
 - Add optional whitespace in JSON grammar
 ########################################################
 v0.1.4 - Parser 
-    - Commit: 
+    x Commit: 2026-01-22 14:39
     x Define JSON grammar
     x Load Parser grammar from file 
     x Lexer and Parser text option
@@ -15,7 +16,7 @@ v0.1.4 - Parser
         x Object with multiple primitive values (homogeneous / heterogeneous)
         x List with list and object items 
         x Object with list and object values
-    - Display parse error messages
+    x Display parse error messages
 v0.1.3 - Load Lexer Lines 
     x Commit: 2026-01-21 16:45
     x LoadLexerLines 

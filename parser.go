@@ -1,7 +1,6 @@
 package nlp
 
 import (
-	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -28,13 +27,7 @@ type Parser struct {
 
 type deriveStep struct {
 	Sentence sentence // combination of variables and terminals
-	Tokens   sentence // remaining tokens
-}
-
-func (s deriveStep) String() string {
-	left := strings.Join(s.Sentence, " ")
-	right := strings.Join(s.Tokens, " ")
-	return fmt.Sprintf("%s | %s", left, right)
+	Tokens   []Token  // remaining tokens
 }
 
 // Load Parser grammar from file
@@ -105,28 +98,38 @@ func (p *Parser) Parse(lines [][]byte, ignore *ds.Set[string]) error {
 		return err
 	}
 
-	// Parse the tokens
-	items := list.Map(tokens, Token.GetType)
 	// Temporary: remove whitespace for now
 	// TODO: remove this step once optional whitespace added to grammars
-	items = list.Filter(items, func(item string) bool {
-		return item != whitespace
+	tokens = list.Filter(tokens, func(token Token) bool {
+		return token.Type != whitespace
 	})
 
-	q := ds.NewQueue[*deriveStep]()
-	q.Enqueue(&deriveStep{
+	// Set first step as last step with tokens
+	lastStep := &deriveStep{
 		Sentence: sentence{p.start},
-		Tokens:   items,
-	})
-	errParse := errors.New("parse error")
+		Tokens:   tokens,
+	}
+	q := ds.NewQueue[*deriveStep]()
+	q.Enqueue(lastStep)
 
 	// Invariant: sentence is non-empty and first word is a variable
 	// Important: replacement rule must start with terminal or is a single variable
 	for q.NotEmpty() {
 		step, _ := q.Dequeue()
+
+		if len(step.Tokens) > 0 {
+			lastStep = step // set as last step if has tokens
+		}
+
+		if len(step.Sentence) == 0 {
+			continue // skip if empty sentence
+		}
+
 		variable := step.Sentence[0]
 		for _, rule := range p.getReplacements(variable) {
-			result, ok := align(newEquation(rule, step.Sentence), step.Tokens)
+			// align front and back
+			equation := newEquation(rule, step.Sentence)
+			result, ok := alignFront(equation, step.Tokens)
 			if !ok {
 				continue // skip if not aligned
 			}
@@ -135,13 +138,17 @@ func (p *Parser) Parse(lines [][]byte, ignore *ds.Set[string]) error {
 			if emptyLeft && emptyRight {
 				// both sides are fully consumed = success
 				return nil
-			} else if !emptyLeft && !emptyRight {
-				// both sides are not empty = add to queue
+			} else {
+				// add to queue
 				q.Enqueue(result)
 			}
 		}
+
 	}
-	return errParse
+	// Exit loop = queue is empty = failed to parse
+	token := lastStep.Tokens[0]
+	limit := min(10, len(token.Text))
+	return fmt.Errorf("syntax error: unexpected %q at line %d, col %d", token.Text[:limit], token.Row+1, token.Col+1)
 }
 
 // Create new equation
@@ -155,28 +162,29 @@ func newEquation(rule, prev sentence) sentence {
 	return equation
 }
 
-// Align sentence and tokens
-func align(equation, tokens sentence) (*deriveStep, bool) {
+// Align sentence and tokens from the front
+func alignFront(equation sentence, tokens []Token) (*deriveStep, bool) {
 	limit := min(len(equation), len(tokens))
 	for i := range limit {
 		left, right := equation[i], tokens[i]
 		if isTerminal(left) {
 			// equation has terminal in front, try to match with token
-			if left != right {
+			if left != right.Type {
 				return nil, false
 			}
 		} else {
 			// equation now has variable in front, stop here
 			step := &deriveStep{
-				Sentence: equation[i:],
-				Tokens:   tokens[i:],
+				Sentence: list.Copy(equation[i:]),
+				Tokens:   list.Copy(tokens[i:]),
 			}
 			return step, true
 		}
 	}
+	// Everything matched so far, stop here
 	step := &deriveStep{
-		Sentence: equation[limit:],
-		Tokens:   tokens[limit:],
+		Sentence: list.Copy(equation[limit:]),
+		Tokens:   list.Copy(tokens[limit:]),
 	}
 	return step, true
 }
