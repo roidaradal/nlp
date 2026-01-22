@@ -80,9 +80,7 @@ func getConfig(options dict.StringMap) (*Config, error) {
 		cfg.lines = lines
 	} else {
 		// Read lines from text
-		cfg.lines = list.Map(str.Lines(text), func(line string) []byte {
-			return []byte(line)
-		})
+		cfg.lines = list.Map(str.Lines(text), str.ToBytes)
 	}
 
 	return cfg, nil

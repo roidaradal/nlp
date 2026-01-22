@@ -3,6 +3,9 @@ TODO:
 - Add grammar notation for * + ?
 - Add optional whitespace in JSON grammar
 ########################################################
+v0.1.5 - Fix ReadLineBytes
+    x Commit: 2026-01-22 15:06
+    x Fix ReadLineBytes
 v0.1.4 - Parser 
     x Commit: 2026-01-22 14:39
     x Define JSON grammar

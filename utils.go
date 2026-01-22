@@ -1,11 +1,10 @@
 package nlp
 
 import (
-	"bufio"
 	"fmt"
-	"os"
 
 	"github.com/roidaradal/fn/io"
+	"github.com/roidaradal/fn/list"
 	"github.com/roidaradal/fn/str"
 )
 
@@ -40,22 +39,10 @@ func readCfgLines(path string) (tokenLines []string, grammarLines []string, err 
 
 // Read byte lines from given path
 func ReadLineBytes(path string) ([][]byte, error) {
-	file, err := os.Open(path)
+	strLines, err := io.ReadNonEmptyLines(path)
 	if err != nil {
-		return nil, str.WrapError("failed to open file", err)
-	}
-	defer file.Close()
-
-	lines := make([][]byte, 0)
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := scanner.Bytes()
-		lines = append(lines, line)
-	}
-
-	if err := scanner.Err(); err != nil {
 		return nil, err
 	}
-
+	lines := list.Map(strLines, str.ToBytes)
 	return lines, nil
 }
