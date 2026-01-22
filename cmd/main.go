@@ -33,24 +33,26 @@ func main() {
 func cmdTokenize(options dict.StringMap) error {
 	// Required: file={PATH} cfg={PATH}
 	// Options:  ignore={TYPE1,TYPE2,...}
-	tokenizeUsage := "Usage: nlp tokenize file={PATH} cfg={PATH} (ignore={TYPE1,TYPE2,...})"
+	tokenizeUsage := "Usage: nlp tokenize cfg={PATH} (file={PATH} | text={TEXT}) (ignore={TYPE1,TYPE2,...})"
 
 	// Get paths from options
-	cfgPath, filePath := "", ""
+	cfgPath, filePath, text := "", "", ""
 	ignore := ds.NewSet[string]()
 	for k, v := range options {
 		switch k {
-		case "file":
-			filePath = v
 		case "cfg":
 			cfgPath = v
+		case "file":
+			filePath = v
+		case "text":
+			text = v
 		case "ignore":
 			ignore.AddItems(strings.Split(v, ","))
 		}
 	}
 
-	// Check if both paths are set
-	if cfgPath == "" || filePath == "" {
+	// Check if cfgPath is set and either filePath or text is set
+	if cfgPath == "" || (filePath == "" && text == "") {
 		fmt.Println(tokenizeUsage)
 		return nil
 	}
@@ -61,8 +63,17 @@ func cmdTokenize(options dict.StringMap) error {
 		return err
 	}
 
-	// Open file path
-	lines, err := nlp.ReadLineBytes(filePath)
+	var lines [][]byte
+
+	if filePath != "" {
+		// Read lines from filePath
+		lines, err = nlp.ReadLineBytes(filePath)
+	} else {
+		// Read lines from text
+		lines = list.Map(str.Lines(text), func(line string) []byte {
+			return []byte(line)
+		})
+	}
 	if err != nil {
 		return err
 	}
@@ -97,21 +108,23 @@ func cmdTokenize(options dict.StringMap) error {
 // Parse command handler
 func cmdParse(options dict.StringMap) error {
 	// Required: file={PATH} cfg={PATH}
-	parseUsage := "Usage: nlp parse file={PATH} cfg={PATH}"
+	parseUsage := "Usage: nlp parse cfg={PATH} (file={PATH} | text={TEXT})"
 
 	// Get paths from options
-	cfgPath, filePath := "", ""
+	cfgPath, filePath, text := "", "", ""
 	for k, v := range options {
 		switch k {
-		case "file":
-			filePath = v
 		case "cfg":
 			cfgPath = v
+		case "file":
+			filePath = v
+		case "text":
+			text = v
 		}
 	}
 
-	// Check if both parts are set
-	if cfgPath == "" || filePath == "" {
+	// Check if cfgPath is set and either filePath or text is set
+	if cfgPath == "" || (filePath == "" && text == "") {
 		fmt.Println(parseUsage)
 		return nil
 	}

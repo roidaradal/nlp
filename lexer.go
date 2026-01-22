@@ -112,11 +112,11 @@ func (l *Lexer) tokenizeLine(row int, line []byte, ignore *ds.Set[string]) ([]To
 
 // Create new JSON Lexer
 func NewJSONLexer() (*Lexer, error) {
-	lines := strings.Split(jsonGrammar, "\n")
+	lines := strings.Split(jsonTokens, "\n")
 	return LoadLexerLines(lines)
 }
 
-var jsonGrammar string = `
+var jsonTokens string = `
 LEFT_BRACE      :   \{
 RIGHT_BRACE     :   \}
 LEFT_BRACKET    :   \[

@@ -14,6 +14,7 @@ import (
 // const epsilon string = "EPSILON"
 
 type Parser struct {
+	*Lexer
 	variables []string
 	terminals []string
 	rules     map[string][][]string
@@ -37,22 +38,28 @@ func (p Parser) Info() string {
 
 // Load Parser grammar from file
 func LoadParser(path string) (*Parser, error) {
-	_, lines, err := readCfgLines(path)
+	tokenLines, grammarLines, err := readCfgLines(path)
 	if err != nil {
 		return nil, err
 	}
 
-	return LoadParserLines(lines)
+	return LoadParserLines(tokenLines, grammarLines)
 }
 
 // Load Parser grammar from lines
-func LoadParserLines(lines []string) (*Parser, error) {
+func LoadParserLines(tokenLines, grammarLines []string) (*Parser, error) {
+	lexer, err := LoadLexerLines(tokenLines)
+	if err != nil {
+		return nil, err
+	}
+
 	p := &Parser{
+		Lexer:     lexer,
 		variables: make([]string, 0),
 		rules:     make(map[string][][]string),
 	}
 	terminals := ds.NewSet[string]()
-	for _, line := range lines {
+	for _, line := range grammarLines {
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue
@@ -82,3 +89,18 @@ func isTerminal(token string) bool {
 func isVariable(token string) bool {
 	return strings.HasPrefix(token, "<") && strings.HasSuffix(token, ">")
 }
+
+// Create new JSON parser
+func NewJSONParser() (*Parser, error) {
+	tokenLines := strings.Split(jsonTokens, "\n")
+	grammarLines := strings.Split(jsonGrammar, "\n")
+	return LoadParserLines(tokenLines, grammarLines)
+}
+
+var jsonGrammar string = `
+<JSON>      =   BOOLEAN | NULL | STRING | NUMBER | <LIST> | <OBJ>
+<LIST>      =   LEFT_BRACKET <JSON> <ITEMS> RIGHT_BRACKET | LEFT_BRACKET RIGHT_BRACKET
+<ITEMS>     =   EPSILON | COMMA <JSON> <ITEMS>
+<OBJ>       =   LEFT_BRACE STRING COLON <JSON> <ENTRIES> RIGHT_BRACE | LEFT_BRACE RIGHT_BRACE
+<ENTRIES>   =   EPSILON | COMMA STRING COLON <JSON> <ENTRIES>
+`
