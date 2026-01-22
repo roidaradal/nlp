@@ -90,8 +90,8 @@ func isVariable(token string) bool {
 	return strings.HasPrefix(token, "<") && strings.HasSuffix(token, ">")
 }
 
-// Tokenize given list of lines, and parse the resulting tokens
-func (p *Parser) Parse(lines [][]byte, ignore *ds.Set[string]) error {
+// Tokenize given list of lines, and check if the resulting tokens follows the grammar
+func (p *Parser) CheckSyntaxError(lines [][]byte, ignore *ds.Set[string]) error {
 	// Tokenize the lines
 	tokens, err := p.Lexer.Tokenize(lines, ignore)
 	if err != nil {
@@ -148,7 +148,7 @@ func (p *Parser) Parse(lines [][]byte, ignore *ds.Set[string]) error {
 	// Exit loop = queue is empty = failed to parse
 	token := lastStep.Tokens[0]
 	limit := min(10, len(token.Text))
-	return fmt.Errorf("syntax error: unexpected %q at line %d, col %d", token.Text[:limit], token.Row+1, token.Col+1)
+	return fmt.Errorf("syntax error: unexpected %s at line %d, col %d", token.Text[:limit], token.Row+1, token.Col+1)
 }
 
 // Create new equation

@@ -114,7 +114,7 @@ func (l *Lexer) tokenizeLine(row int, line []byte, ignore *ds.Set[string]) ([]To
 		}
 		if !found {
 			limit := min(10, len(line))
-			return nil, fmt.Errorf("syntax error: unexpected %q at line %d, col %d", string(line[:limit]), row+1, col+1)
+			return nil, fmt.Errorf("syntax error: unexpected %s at line %d, col %d", string(line[:limit]), row+1, col+1)
 		}
 	}
 	return tokens, nil

@@ -14,7 +14,7 @@ import (
 	"github.com/roidaradal/nlp"
 )
 
-const usage string = "Usage: nlp <tokenize|parse> cfg={PATH} <file={PATH} | text={TEXT}> (ignore={TYPE1,TYPE2,...})"
+const usage string = "Usage: nlp <tokenize|check> cfg={PATH} <file={PATH} | text={TEXT}> (ignore={TYPE1,TYPE2,...})"
 
 type Config struct {
 	path   string
@@ -34,8 +34,8 @@ func main() {
 	switch command {
 	case "tokenize":
 		err = cmdTokenize(cfg)
-	case "parse":
-		err = cmdParse(cfg)
+	case "check":
+		err = cmdCheck(cfg)
 	default:
 		fmt.Println(usage)
 	}
@@ -121,15 +121,15 @@ func cmdTokenize(cfg *Config) error {
 	return nil
 }
 
-// Parse command handler
-func cmdParse(cfg *Config) error {
+// Check command handler
+func cmdCheck(cfg *Config) error {
 	// Create parser from cfgPath
 	parser, err := nlp.LoadParser(cfg.path)
 	if err != nil {
 		return err
 	}
 
-	err = parser.Parse(cfg.lines, cfg.ignore)
+	err = parser.CheckSyntaxError(cfg.lines, cfg.ignore)
 	if err != nil {
 		return err
 	}
