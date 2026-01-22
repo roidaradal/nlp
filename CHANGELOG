@@ -1,3 +1,7 @@
+v0.1.4 - Parser 
+    - Commit: 
+    x Define JSON grammar
+    - Load cfg file with tokens and grammar
 v0.1.3 - Load Lexer Lines 
     x Commit: 2026-01-21 16:45
     x LoadLexerLines 

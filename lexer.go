@@ -125,9 +125,8 @@ LEFT_BRACKET    :   \[
 RIGHT_BRACKET   :   \]
 COLON           :   :
 COMMA           :   ,
-LITERAL_TRUE    :   true
-LITERAL_FALSE   :   false
-LITERAL_NULL    :   null
+BOOLEAN    		:   (true|false)
+NULL   	 		:   null
 STRING          :   "[^"\\]*(?:\\.[^"\\]*)*"
 NUMBER          :   -?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?
 WHITESPACE      :   \s+
