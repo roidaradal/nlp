@@ -14,45 +14,49 @@ import (
 )
 
 func main() {
+	var err error
 	command, options := io.GetCommandOptions("")
 	switch command {
 	case "tokenize":
-		err := cmdTokenize(options)
-		if err != nil {
-			fmt.Println("Error: ", err)
-		}
+		err = cmdTokenize(options)
+	case "parse":
+		err = cmdParse(options)
 	default:
-		fmt.Println("Usage: nlp <tokenize> (key=value)*")
+		fmt.Println("Usage: nlp <tokenize|parse> (key=value)*")
+	}
+	if err != nil {
+		fmt.Println("Error: ", err)
 	}
 }
 
+// Tokenize command handler
 func cmdTokenize(options dict.StringMap) error {
-	// Required: file={PATH} tokens={PATH}
+	// Required: file={PATH} cfg={PATH}
 	// Options:  ignore={TYPE1,TYPE2,...}
-	tokenizeUsage := "Usage: nlp tokenize file={PATH} tokens={PATH} (ignore={TYPE1,TYPE2,...})"
+	tokenizeUsage := "Usage: nlp tokenize file={PATH} cfg={PATH} (ignore={TYPE1,TYPE2,...})"
 
 	// Get paths from options
-	tokenPath, filePath := "", ""
+	cfgPath, filePath := "", ""
 	ignore := ds.NewSet[string]()
 	for k, v := range options {
 		switch k {
 		case "file":
 			filePath = v
-		case "tokens":
-			tokenPath = v
+		case "cfg":
+			cfgPath = v
 		case "ignore":
 			ignore.AddItems(strings.Split(v, ","))
 		}
 	}
 
 	// Check if both paths are set
-	if tokenPath == "" || filePath == "" {
+	if cfgPath == "" || filePath == "" {
 		fmt.Println(tokenizeUsage)
 		return nil
 	}
 
-	// Create lexer from tokenPath
-	lexer, err := nlp.LoadLexer(tokenPath)
+	// Create lexer from cfgPath
+	lexer, err := nlp.LoadLexer(cfgPath)
 	if err != nil {
 		return err
 	}
@@ -87,5 +91,38 @@ func cmdTokenize(options dict.StringMap) error {
 	for i, token := range tokens {
 		fmt.Printf(template, i+1, token.Type, token.Coords(), token.Text)
 	}
+	return nil
+}
+
+// Parse command handler
+func cmdParse(options dict.StringMap) error {
+	// Required: file={PATH} cfg={PATH}
+	parseUsage := "Usage: nlp parse file={PATH} cfg={PATH}"
+
+	// Get paths from options
+	cfgPath, filePath := "", ""
+	for k, v := range options {
+		switch k {
+		case "file":
+			filePath = v
+		case "cfg":
+			cfgPath = v
+		}
+	}
+
+	// Check if both parts are set
+	if cfgPath == "" || filePath == "" {
+		fmt.Println(parseUsage)
+		return nil
+	}
+
+	// Create parser from cfgPath
+	parser, err := nlp.LoadParser(cfgPath)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(parser.Info())
+
 	return nil
 }
