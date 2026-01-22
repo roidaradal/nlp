@@ -7,17 +7,14 @@ v0.1.4 - Parser
     x Define JSON grammar
     x Load Parser grammar from file 
     x Lexer and Parser text option
-    - Parser.Parse()
+    x Parser.Parse()
         x Primitives: boolean, null, string, number 
-        - Empty List, Empty Object 
-        - List with 1 primitive item 
-        - Object with 1 primitive value 
-        - List with multiple primitive items (homogeneous)
-        - List with multiple primitive items (heterogeneous)
-        - Object with multiple primitive values (homogeneous)
-        - Object with multiple primitive values (heterogeneous)
-        - List with list and object items 
-        - Object with list and object values
+        x Empty List, Empty Object 
+        x List / Object with 1 primitive item 
+        x List with multiple primitive items (homogeneous / heterogeneous)
+        x Object with multiple primitive values (homogeneous / heterogeneous)
+        x List with list and object items 
+        x Object with list and object values
     - Display parse error messages
 v0.1.3 - Load Lexer Lines 
     x Commit: 2026-01-21 16:45

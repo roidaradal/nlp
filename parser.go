@@ -7,13 +7,12 @@ import (
 	"strings"
 
 	"github.com/roidaradal/fn/ds"
-	"github.com/roidaradal/fn/lang"
 	"github.com/roidaradal/fn/list"
 	"github.com/roidaradal/fn/str"
 )
 
 const (
-	// epsilon    string = "EPSILON"
+	epsilon    string = "EPSILON"
 	whitespace string = "WHITESPACE"
 )
 
@@ -114,33 +113,46 @@ func (p *Parser) Parse(lines [][]byte, ignore *ds.Set[string]) error {
 		return item != whitespace
 	})
 
-	step := &deriveStep{
+	q := ds.NewQueue[*deriveStep]()
+	q.Enqueue(&deriveStep{
 		Sentence: sentence{p.start},
 		Tokens:   items,
-	}
-	// q := ds.NewQueue[deriveStep]()
-	// q.Enqueue(step)
+	})
+	errParse := errors.New("parse error")
 
 	// Invariant: sentence is non-empty and first word is a variable
 	// Important: replacement rule must start with terminal or is a single variable
-	variable := step.Sentence[0]
-	options := p.getReplacements(variable)
-	for _, rule := range options {
-		result, ok := align(rule, step.Tokens)
-		if ok {
-			// For now, check that both sides are fully consumed
-			// Later, add to queue to continue
-			isDone := len(result.Sentence) == 0 && len(result.Tokens) == 0
-			err := lang.Ternary(isDone, nil, errors.New("parse error"))
-			if err != nil {
-				fmt.Println(result.Sentence)
-				fmt.Println(result.Tokens)
+	for q.NotEmpty() {
+		step, _ := q.Dequeue()
+		variable := step.Sentence[0]
+		for _, rule := range p.getReplacements(variable) {
+			result, ok := align(newEquation(rule, step.Sentence), step.Tokens)
+			if !ok {
+				continue // skip if not aligned
 			}
-			return err
+			emptyLeft := len(result.Sentence) == 0
+			emptyRight := len(result.Tokens) == 0
+			if emptyLeft && emptyRight {
+				// both sides are fully consumed = success
+				return nil
+			} else if !emptyLeft && !emptyRight {
+				// both sides are not empty = add to queue
+				q.Enqueue(result)
+			}
 		}
 	}
+	return errParse
+}
 
-	return nil
+// Create new equation
+func newEquation(rule, prev sentence) sentence {
+	equation := make(sentence, 0)
+	equation = append(equation, rule...)     // add replacement rule to front
+	equation = append(equation, prev[1:]...) // add rest of sentence to end
+	equation = list.Filter(equation, func(token string) bool {
+		return token != epsilon // filter out epsilon
+	})
+	return equation
 }
 
 // Align sentence and tokens
