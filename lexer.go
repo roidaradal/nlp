@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/roidaradal/fn/ds"
-	"github.com/roidaradal/fn/io"
 	"github.com/roidaradal/fn/list"
 	"github.com/roidaradal/fn/str"
 )
@@ -37,13 +36,9 @@ type Lexer struct {
 
 // Load Lexer token types from file
 func LoadLexer(path string) (*Lexer, error) {
-	if !io.PathExists(path) {
-		return nil, fmt.Errorf("path does not exist")
-	}
-
-	lines, err := io.ReadNonEmptyLines(path)
+	lines, _, err := readCfgLines(path)
 	if err != nil {
-		return nil, str.WrapError("failed to open file", err)
+		return nil, err
 	}
 
 	return LoadLexerLines(lines)
@@ -53,6 +48,10 @@ func LoadLexer(path string) (*Lexer, error) {
 func LoadLexerLines(lines []string) (*Lexer, error) {
 	types := make([]TokenType, 0)
 	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
 		parts := str.CleanSplitN(line, ":", 2)
 		types = append(types, TokenType{parts[0], parts[1]})
 	}
@@ -113,8 +112,7 @@ func (l *Lexer) tokenizeLine(row int, line []byte, ignore *ds.Set[string]) ([]To
 
 // Create new JSON Lexer
 func NewJSONLexer() (*Lexer, error) {
-	lines := strings.Split(strings.TrimSpace(jsonGrammar), "\n")
-	lines = list.Filter(lines, str.NotEmpty)
+	lines := strings.Split(jsonGrammar, "\n")
 	return LoadLexerLines(lines)
 }
 
