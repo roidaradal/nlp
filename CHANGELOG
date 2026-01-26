@@ -1,13 +1,12 @@
-TODO:
-- Add test suite for JSON parser
-- Return Parse Tree for Parse()
-- Add grammar notation for * + ?
-- Add optional whitespace in JSON grammar
-########################################################
-v0.1.6 - 
+v0.1.6 - Parse Tree
     - Commit: 
     x Update error message (no quotes)
     x Rename Parse() to CheckSyntaxError()
+    x Add comments in cfg file
+    - Add grammar notation for * + ? ()
+    - Add optional whitespace in JSON grammar
+    - Parse() - return parse tree
+    - Test suite for JSON parser
 v0.1.5 - Fix ReadLineBytes
     x Commit: 2026-01-22 15:06
     x Fix ReadLineBytes
@@ -16,7 +15,7 @@ v0.1.4 - Parser
     x Define JSON grammar
     x Load Parser grammar from file 
     x Lexer and Parser text option
-    x Parser.Parse()
+    x Parser.CheckSyntaxError()
         x Primitives: boolean, null, string, number 
         x Empty List, Empty Object 
         x List / Object with 1 primitive item 

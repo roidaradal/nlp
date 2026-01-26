@@ -2,6 +2,7 @@ package nlp
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/roidaradal/fn/io"
 	"github.com/roidaradal/fn/list"
@@ -23,7 +24,9 @@ func readCfgLines(path string) (tokenLines []string, grammarLines []string, err 
 	grammarLines = make([]string, 0)
 	tokenMode, grammarMode := false, false
 	for _, line := range lines {
-		if line == "tokens:" {
+		if strings.HasPrefix(line, "#") {
+			continue // skip comments
+		} else if line == "tokens:" {
 			tokenMode = true
 		} else if line == "grammar:" {
 			grammarMode = true
