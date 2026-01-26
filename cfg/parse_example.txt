@@ -1,0 +1,115 @@
+Expected tokenization of data/1.json:
+LEFT_BRACE
+            STRING COLON    STRING 
+    COMMA   STRING COLON    NUMBER
+    COMMA   STRING COLON    NUMBER
+    COMMA   STRING COLON    NUMBER
+    COMMA   STRING COLON    NUMBER
+    COMMA   STRING COLON    STRING 
+    COMMA   STRING COLON    LEFT_BRACKET 
+                                STRING COMMA 
+                                NUMBER COMMA 
+                                BOOLEAN COMMA 
+                                BOOLEAN COMMA 
+                                NULL 
+                            RIGHT_BRACKET
+    COMMA   STRING COLON    STRING
+RIGHT_BRACE
+
+Expected parse results:
+<OBJ> [
+    [STRING STRING]
+    [STRING NUMBER]
+    [STRING NUMBER]
+    [STRING NUMBER]
+    [STRING NUMBER]
+    [STRING STRING]
+    [STRING <LIST> [
+        [STRING]
+        [NUMBER]
+        [BOOLEAN]
+        [BOOLEAN]
+        [NULL]
+    ]]
+    [STRING STRING]
+]
+
+#########################################################################
+
+Expected tokenization of data/6.json 
+LEFT_BRACKET
+            LEFT_BRACE 
+                        STRING COLON    STRING 
+                COMMA   STRING COLON    NUMBER 
+                COMMA   STRING COLON    BOOLEAN
+            RIGHT_BRACE 
+    COMMA   LEFT_BRACE 
+                        STRING COLON    STRING 
+                COMMA   STRING COLON    NUMBER 
+                COMMA   STRING COLON    BOOLEAN
+            RIGHT_BRACE 
+    COMMA   LEFT_BRACE 
+                        STRING COLON    STRING 
+                COMMA   STRING COLON    NUMBER 
+                COMMA   STRING COLON    BOOLEAN
+            RIGHT_BRACE
+RIGHT_BRACKET
+
+Expected parse results:
+<LIST> [
+    [<OBJ> [
+        [STRING STRING]
+        [STRING NUMBER]
+        [STRING BOOLEAN]
+    ]]
+    [<OBJ> [
+        [STRING STRING]
+        [STRING NUMBER]
+        [STRING BOOLEAN]
+    ]]
+    [<OBJ> [
+        [STRING STRING]
+        [STRING NUMBER]
+        [STRING BOOLEAN]
+    ]]
+]
+
+#########################################################################
+
+Expected tokenization of data/8.json:
+LEFT_BRACE 
+            STRING COLON    LEFT_BRACKET
+                                STRING COMMA 
+                                STRING COMMA 
+                                STRING COMMA
+                                STRING
+                            RIGHT_BRACKET
+    COMMA   STRING COLON    LEFT_BRACKET
+                                STRING COMMA 
+                                STRING COMMA
+                                STRING
+                            RIGHT_BRACKET
+    COMMA   STRING COLON    LEFT_BRACKET
+                                STRING COMMA 
+                                STRING
+                            RIGHT_BRACKET
+RIGHT_BRACE
+
+Expected parse results:
+<OBJ> [
+    [STRING <LIST> [
+        [STRING]
+        [STRING]
+        [STRING]
+        [STRING]
+    ]]
+    [STRING <LIST> [
+        [STRING]
+        [STRING]
+        [STRING]
+    ]]
+    [STRING <LIST> [
+        [STRING]
+        [STRING]
+    ]]
+]
